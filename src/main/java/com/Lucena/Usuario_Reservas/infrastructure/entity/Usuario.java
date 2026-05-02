@@ -1,4 +1,4 @@
-package com.lucena.user.infrastructure.entity;
+package com.Lucena.Usuario_Reservas.infrastructure.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,6 +24,8 @@ public class Usuario implements UserDetails {
     private Long id;
     @Column(name = "nome", length = 100)
     private String nome;
+    @Column(name = "CPF", length = 11, unique = true, nullable = false)
+    private String cpf;
     @Column(name = "email", length = 100)
     private String email;
     @Column(name = "senha")

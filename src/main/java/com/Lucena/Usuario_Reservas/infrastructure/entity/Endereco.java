@@ -1,4 +1,4 @@
-package com.lucena.user.infrastructure.entity;
+package com.Lucena.Usuario_Reservas.infrastructure.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
