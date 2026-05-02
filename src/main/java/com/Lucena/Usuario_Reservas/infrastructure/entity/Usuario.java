@@ -31,12 +31,6 @@ public class Usuario implements UserDetails {
     @Column(name = "senha")
     private String senha;
 
-    @OneToMany(cascade = CascadeType.ALL) /* Notaçao para indicar, por exemplo, que um usuário
-                    pode ter mais de 1 endereço. Se fosse uma tabela em que um usuário pudesse ter somente 1 endereço
-                    seria a notaçao @OneToOne */
-    @JoinColumn(name = "usuario_id", referencedColumnName = "id")
-    private List<Endereco> enderecos;
-
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "usuario_id", referencedColumnName = "id")
     private List<Telefone> telefones;
