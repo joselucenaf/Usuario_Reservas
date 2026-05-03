@@ -1,10 +1,13 @@
 package com.Lucena.Usuario_Reservas.business;
 
 import com.Lucena.Usuario_Reservas.business.converter.UsuarioConverter;
+import com.Lucena.Usuario_Reservas.business.dto.TelefoneDTO;
 import com.Lucena.Usuario_Reservas.business.dto.UsuarioDTO;
+import com.Lucena.Usuario_Reservas.infrastructure.entity.Telefone;
 import com.Lucena.Usuario_Reservas.infrastructure.entity.Usuario;
 import com.Lucena.Usuario_Reservas.infrastructure.exceptions.ConflictException;
 import com.Lucena.Usuario_Reservas.infrastructure.exceptions.ResourceNotFoundException;
+import com.Lucena.Usuario_Reservas.infrastructure.repository.TelefoneRepository;
 import com.Lucena.Usuario_Reservas.infrastructure.repository.UsuarioRepository;
 import com.Lucena.Usuario_Reservas.infrastructure.security.JwtUtil;
 import lombok.Builder;
@@ -20,6 +23,7 @@ public class UsuarioService {
     private final UsuarioConverter usuarioConverter;
     public final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final TelefoneRepository telefoneRepository;
 
     public UsuarioDTO salvaUsuario(UsuarioDTO usuarioDTO) {
         emailExiste(usuarioDTO.getEmail());
@@ -58,14 +62,15 @@ public class UsuarioService {
         return usuarioRepository.existsByCpf(cpf);
     }
 
-    public Usuario buscarUsuarioPorLogin(String login) {
-        return usuarioRepository.findByEmailOrCpf(login, login)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + login));
-    }
-
-    public UsuarioDTO buscarUsuarioPorLoginDTO(String login) {
-        Usuario usuario = buscarUsuarioPorLogin(login);
-        return usuarioConverter.paraUsuarioDTO(usuario);
+    public UsuarioDTO buscarUsuarioPorLogin(String login) {
+        try {
+            return usuarioConverter.paraUsuarioDTO(
+                    usuarioRepository.findByEmailOrCpf(login, login)
+                            .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + login))
+            );
+        } catch (ResourceNotFoundException e) {
+            throw new ResourceNotFoundException("Usuário não encontrado: " + login);
+        }
     }
 
     public void deletarUsuario(String login) {
@@ -94,5 +99,12 @@ public class UsuarioService {
 
         // Salva e retorna o DTO convertido
         return usuarioConverter.paraUsuarioDTO(usuarioRepository.save(usuario));
+    }
+
+    public TelefoneDTO atualizaTelefone(Long idTelefone, TelefoneDTO dto){
+        Telefone entity = telefoneRepository.findById(idTelefone).orElseThrow(
+                ()-> new ResourceNotFoundException("Id não encontrado "+ idTelefone));
+        Telefone telefone = usuarioConverter.updateTelefone(dto, entity);
+        return usuarioConverter.paraTelefoneDTO(telefoneRepository.save(telefone));
     }
 }
