@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
+
     private final UsuarioRepository usuarioRepository;
     private final UsuarioConverter usuarioConverter;
     public final PasswordEncoder passwordEncoder;
@@ -33,44 +34,36 @@ public class UsuarioService {
         return usuarioConverter.paraUsuarioDTO(usuarioRepository.save(usuario));
     }
 
-    public void emailExiste(String email){
-        try{
-            boolean existe = verificaEmailExistente(email);
-            if(existe){
-                throw new ConflictException("Email já cadastrado: " + email);
-            }
-        }catch (ConflictException e){
-            throw new ConflictException("Email já cadastrado: " + email, e.getCause());
+    public void emailExiste(String email) {
+        if (verificaEmailExistente(email)) {
+            throw new ConflictException("Email já cadastrado: " + email);
         }
     }
 
-    public boolean verificaEmailExistente(String email){
+    public boolean verificaEmailExistente(String email) {
         return usuarioRepository.existsByEmail(email);
     }
-    public void cpfExiste(String cpf){
-        try{
-            boolean existe = verificaCpfExistente(cpf);
-            if(existe){
-                throw new ConflictException("CPF já cadastrado: " + cpf);
-            }
-        }catch (ConflictException e){
-            throw new ConflictException("CPF já cadastrado: " + cpf, e.getCause());
+
+    public void cpfExiste(String cpf) {
+        if (verificaCpfExistente(cpf)) {
+            throw new ConflictException("CPF já cadastrado: " + cpf);
         }
     }
 
-    public boolean verificaCpfExistente(String cpf){
+    public boolean verificaCpfExistente(String cpf) {
         return usuarioRepository.existsByCpf(cpf);
     }
 
     public UsuarioDTO buscarUsuarioPorLogin(String login) {
-        try {
-            return usuarioConverter.paraUsuarioDTO(
-                    usuarioRepository.findByEmailOrCpf(login, login)
-                            .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + login))
-            );
-        } catch (ResourceNotFoundException e) {
-            throw new ResourceNotFoundException("Usuário não encontrado: " + login);
-        }
+        Usuario usuario = usuarioRepository.findByEmailOrCpf(login, login)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + login));
+        return usuarioConverter.paraUsuarioDTO(usuario);
+    }
+
+    public UsuarioDTO buscarUsuarioPorId(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com o ID: " + id));
+        return usuarioConverter.paraUsuarioDTO(usuario);
     }
 
     public void deletarUsuario(String login) {
@@ -84,26 +77,20 @@ public class UsuarioService {
         // Busca o identificador (email ou cpf) do usuário através do Token
         String login = jwtUtil.extrairEmailToken(token.substring(7));
 
-        // Criptografia de senha se ela for enviada no DTO
         if (dto.getSenha() != null && !dto.getSenha().isBlank()) {
             dto.setSenha(passwordEncoder.encode(dto.getSenha()));
         }
 
-        // Busca os dados do usuário no BD usando o login extraído do token
         Usuario usuarioEntity = usuarioRepository.findByEmailOrCpf(login, login)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + login));
-
-        // Mescla os dados que recebe na requisição (DTO) com os dados do BD através do converter
-        // Certifique-se de que o método updateUsuario existe no seu UsuarioConverter
         Usuario usuario = usuarioConverter.updateUsuario(dto, usuarioEntity);
 
-        // Salva e retorna o DTO convertido
         return usuarioConverter.paraUsuarioDTO(usuarioRepository.save(usuario));
     }
 
-    public TelefoneDTO atualizaTelefone(Long idTelefone, TelefoneDTO dto){
+    public TelefoneDTO atualizaTelefone(Long idTelefone, TelefoneDTO dto) {
         Telefone entity = telefoneRepository.findById(idTelefone).orElseThrow(
-                ()-> new ResourceNotFoundException("Id não encontrado "+ idTelefone));
+                () -> new ResourceNotFoundException("Id não encontrado " + idTelefone));
         Telefone telefone = usuarioConverter.updateTelefone(dto, entity);
         return usuarioConverter.paraTelefoneDTO(telefoneRepository.save(telefone));
     }
